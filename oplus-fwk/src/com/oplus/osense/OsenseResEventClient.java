@@ -3,6 +3,7 @@ package com.oplus.osense;
 import com.oplus.osense.eventinfo.EventConfig;
 import com.oplus.osense.eventinfo.OsenseEventCallback;
 import android.os.Bundle;
+import android.content.Context;
 
 public class OsenseResEventClient {
 
@@ -29,5 +30,8 @@ public class OsenseResEventClient {
 
     public int requestInstantCpuLoad() {
         return 0;
+    }
+    public void startBackgroundRunning(Context context, int bgMode, OsenseEventCallback callback) {
+        return;
     }
 }
