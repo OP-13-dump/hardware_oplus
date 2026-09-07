@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    SPDX-FileCopyrightText: The LineageOS Project
+    SPDX-License-Identifier: Apache-2.0
+-->
+<resources>
+    <string name="alert_slider_mode_torch_blink">Blink</string>
+    <string name="alert_slider_mode_brightness_auto">Auto brightness</string>
+    <string name="alert_slider_mode_brightness_brightest">Brightest</string>
+    <string name="alert_slider_mode_brightness_darkest">Darkest</string>
+    <string name="alert_slider_mode_rotation_auto">Auto rotate</string>
+    <string name="alert_slider_mode_rotation_portrait">Portrait</string>
+    <string name="alert_slider_mode_rotation_landscape_90">Landscape (90°)</string>
+    <string name="alert_slider_mode_rotation_landscape_270">Landscape (270°)</string>
+    <string name="alert_slider_mode_app_none">No app selected</string>
+</resources>
