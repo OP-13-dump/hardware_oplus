@@ -118,7 +118,7 @@ class AlertSliderDialog(private val context: Context) :
     }
 
     @Synchronized
-    fun setState(position: Int, ringerMode: Int) {
+    fun setState(position: Int, ringerMode: Int, packageName: String? = null) {
         val delta =
             length *
                 when (position) {
@@ -132,15 +132,21 @@ class AlertSliderDialog(private val context: Context) :
         if (isLandscape) endX += delta else endY += delta
 
         if (isShowing) {
-            animatePosition(endX, endY, position, ringerMode)
+            animatePosition(endX, endY, position, ringerMode, packageName)
         } else {
-            applyUiMode(ringerMode)
+            applyUiMode(ringerMode, packageName)
             applyPositionAndBackground(endX, endY, position)
         }
     }
 
     @Synchronized
-    private fun animatePosition(endX: Int, endY: Int, position: Int, ringerMode: Int) {
+    private fun animatePosition(
+        endX: Int,
+        endY: Int,
+        position: Int,
+        ringerMode: Int,
+        packageName: String? = null,
+    ) {
         if (isAnimating) animator.cancel()
         animator = ValueAnimator()
         animator.duration = 100
@@ -167,7 +173,7 @@ class AlertSliderDialog(private val context: Context) :
             object : Animator.AnimatorListener {
                 override fun onAnimationStart(animation: Animator) {
                     isAnimating = true
-                    applyUiMode(ringerMode)
+                    applyUiMode(ringerMode, packageName)
                     val transition =
                         TransitionDrawable(
                             arrayOf(
@@ -196,34 +202,93 @@ class AlertSliderDialog(private val context: Context) :
         animator.start()
     }
 
-    private fun applyUiMode(ringerMode: Int) {
-        iconView.setImageResource(
-            when (ringerMode) {
-                AudioManager.RINGER_MODE_SILENT -> R.drawable.ic_volume_ringer_mute
-                AudioManager.RINGER_MODE_VIBRATE -> R.drawable.ic_volume_ringer_vibrate
-                AudioManager.RINGER_MODE_NORMAL -> R.drawable.ic_volume_ringer
-                KeyHandler.ZEN_PRIORITY_ONLY -> R.drawable.ic_notifications_alert
-                KeyHandler.ZEN_TOTAL_SILENCE -> R.drawable.ic_notifications_silence
-                KeyHandler.ZEN_ALARMS_ONLY -> R.drawable.ic_alarm
-                KeyHandler.TORCH_ON -> R.drawable.ic_torch_on
-                KeyHandler.TORCH_OFF -> R.drawable.ic_torch_off
-                else -> R.drawable.ic_info
+    private fun applyUiMode(ringerMode: Int, packageName: String? = null) {
+        when (ringerMode) {
+            AudioManager.RINGER_MODE_SILENT, MODE_SILENT -> {
+                iconView.setImageResource(R.drawable.ic_volume_ringer_mute)
+                textView.setText(R.string.alert_slider_mode_silent)
             }
-        )
-
-        textView.setText(
-            when (ringerMode) {
-                AudioManager.RINGER_MODE_SILENT -> R.string.alert_slider_mode_silent
-                AudioManager.RINGER_MODE_VIBRATE -> R.string.alert_slider_mode_vibration
-                AudioManager.RINGER_MODE_NORMAL -> R.string.alert_slider_mode_normal
-                KeyHandler.ZEN_PRIORITY_ONLY -> R.string.alert_slider_mode_dnd_priority_only
-                KeyHandler.ZEN_TOTAL_SILENCE -> R.string.alert_slider_mode_dnd_total_silence
-                KeyHandler.ZEN_ALARMS_ONLY -> R.string.alert_slider_mode_dnd_alarms_only
-                KeyHandler.TORCH_ON -> R.string.alert_slider_mode_torch_on
-                KeyHandler.TORCH_OFF -> R.string.alert_slider_mode_torch_off
-                else -> R.string.alert_slider_mode_none
+            AudioManager.RINGER_MODE_VIBRATE, MODE_VIBRATE -> {
+                iconView.setImageResource(R.drawable.ic_volume_ringer_vibrate)
+                textView.setText(R.string.alert_slider_mode_vibration)
             }
-        )
+            AudioManager.RINGER_MODE_NORMAL, MODE_RING, MODE_NONE -> {
+                iconView.setImageResource(R.drawable.ic_volume_ringer)
+                textView.setText(R.string.alert_slider_mode_normal)
+            }
+            KeyHandler.ZEN_PRIORITY_ONLY, MODE_PRIORITY_ONLY -> {
+                iconView.setImageResource(R.drawable.ic_notifications_alert)
+                textView.setText(R.string.alert_slider_mode_dnd_priority_only)
+            }
+            KeyHandler.ZEN_TOTAL_SILENCE, MODE_TOTAL_SILENCE -> {
+                iconView.setImageResource(R.drawable.ic_notifications_silence)
+                textView.setText(R.string.alert_slider_mode_dnd_total_silence)
+            }
+            KeyHandler.ZEN_ALARMS_ONLY, MODE_ALARMS_ONLY -> {
+                iconView.setImageResource(R.drawable.ic_alarm)
+                textView.setText(R.string.alert_slider_mode_dnd_alarms_only)
+            }
+            KeyHandler.TORCH_ON, MODE_FLASHLIGHT_ON -> {
+                iconView.setImageResource(R.drawable.ic_torch_on)
+                textView.setText(R.string.alert_slider_mode_torch_on)
+            }
+            KeyHandler.TORCH_OFF, MODE_FLASHLIGHT_OFF -> {
+                iconView.setImageResource(R.drawable.ic_torch_off)
+                textView.setText(R.string.alert_slider_mode_torch_off)
+            }
+            MODE_FLASHLIGHT_BLINK -> {
+                iconView.setImageResource(R.drawable.ic_torch_on)
+                textView.setText(R.string.alert_slider_mode_torch_blink)
+            }
+            MODE_BRIGHTNESS_AUTO -> {
+                iconView.setImageResource(R.drawable.ic_brightness_auto)
+                textView.setText(R.string.alert_slider_mode_brightness_auto)
+            }
+            MODE_BRIGHTNESS_BRIGHT -> {
+                iconView.setImageResource(R.drawable.ic_brightness)
+                textView.setText(R.string.alert_slider_mode_brightness_brightest)
+            }
+            MODE_BRIGHTNESS_DARK -> {
+                iconView.setImageResource(R.drawable.ic_brightness)
+                textView.setText(R.string.alert_slider_mode_brightness_darkest)
+            }
+            MODE_ROTATION_AUTO -> {
+                iconView.setImageResource(R.drawable.ic_rotate)
+                textView.setText(R.string.alert_slider_mode_rotation_auto)
+            }
+            MODE_ROTATION_0 -> {
+                iconView.setImageResource(R.drawable.ic_rotate)
+                textView.setText(R.string.alert_slider_mode_rotation_portrait)
+            }
+            MODE_ROTATION_90 -> {
+                iconView.setImageResource(R.drawable.ic_rotate)
+                textView.setText(R.string.alert_slider_mode_rotation_landscape_90)
+            }
+            MODE_ROTATION_270 -> {
+                iconView.setImageResource(R.drawable.ic_rotate)
+                textView.setText(R.string.alert_slider_mode_rotation_landscape_270)
+            }
+            MODE_APP_LAUNCH -> {
+                if (!packageName.isNullOrEmpty()) {
+                    try {
+                        val pm = context.packageManager
+                        val appInfo = pm.getApplicationInfo(packageName, 0)
+                        iconView.setImageDrawable(pm.getApplicationIcon(appInfo))
+                        textView.text = pm.getApplicationLabel(appInfo)
+                    } catch (e: Exception) {
+                        iconView.setImageResource(R.drawable.ic_info)
+                        textView.text = packageName
+                    }
+                } else {
+                    iconView.setImageResource(R.drawable.ic_info)
+                    textView.setText(R.string.alert_slider_mode_app_none)
+                }
+            }
+            else -> {
+                iconView.setImageResource(R.drawable.ic_info)
+                textView.setText(R.string.alert_slider_mode_none)
+            }
+        }
         textView.setTextColor(context.getColor(R.color.alert_slider_text_color))
     }
 
@@ -298,5 +363,25 @@ class AlertSliderDialog(private val context: Context) :
 
     companion object {
         private const val TAG = "AlertSliderDialog"
+
+        // DeviceSettings slider action constants
+        const val MODE_TOTAL_SILENCE = 600
+        const val MODE_ALARMS_ONLY = 601
+        const val MODE_PRIORITY_ONLY = 602
+        const val MODE_NONE = 603
+        const val MODE_VIBRATE = 604
+        const val MODE_RING = 605
+        const val MODE_SILENT = 620
+        const val MODE_FLASHLIGHT_ON = 621
+        const val MODE_FLASHLIGHT_OFF = 622
+        const val MODE_FLASHLIGHT_BLINK = 623
+        const val MODE_BRIGHTNESS_BRIGHT = 630
+        const val MODE_BRIGHTNESS_DARK = 631
+        const val MODE_BRIGHTNESS_AUTO = 632
+        const val MODE_ROTATION_AUTO = 640
+        const val MODE_ROTATION_0 = 641
+        const val MODE_ROTATION_90 = 642
+        const val MODE_ROTATION_270 = 643
+        const val MODE_APP_LAUNCH = 650
     }
 }
