@@ -27,7 +27,7 @@ class AlertSliderPlugin : OverlayPlugin {
     private lateinit var handler: NotificationHandler
     private val dialogLock = Any()
 
-    private data class NotificationInfo(val position: Int, val mode: Int)
+    private data class NotificationInfo(val position: Int, val mode: Int, val packageName: String? = null)
 
     private val updateReceiver: BroadcastReceiver =
         object : BroadcastReceiver() {
@@ -53,6 +53,33 @@ class AlertSliderPlugin : OverlayPlugin {
                             handler.sendEmptyMessage(MSG_DIALOG_SHOW)
                         }
                     }
+                    ACTION_UPDATE_SLIDER_POSITION -> {
+                        synchronized(dialogLock) {
+                            val mode =
+                                intent.getIntExtra(EXTRA_SLIDER_POSITION_VALUE, NONE).takeIf { it != NONE } ?: return
+                            val pos = intent.getIntExtra(EXTRA_SLIDER_POSITION, -1)
+                            val position =
+                                when (pos) {
+                                    0 -> KeyHandler.POSITION_TOP
+                                    1 -> KeyHandler.POSITION_MIDDLE
+                                    2 -> KeyHandler.POSITION_BOTTOM
+                                    else -> KeyHandler.POSITION_BOTTOM
+                                }
+                            val pkg = intent.getStringExtra(EXTRA_SLIDER_PACKAGE)
+
+                            handler
+                                .obtainMessage(
+                                    MSG_DIALOG_UPDATE,
+                                    NotificationInfo(
+                                        position,
+                                        mode,
+                                        pkg,
+                                    ),
+                                )
+                                .sendToTarget()
+                            handler.sendEmptyMessage(MSG_DIALOG_SHOW)
+                        }
+                    }
                 }
             }
         }
@@ -66,8 +93,9 @@ class AlertSliderPlugin : OverlayPlugin {
             IntentFilter().apply {
                 addAction(Intent.ACTION_CONFIGURATION_CHANGED)
                 addAction(KeyHandler.CHANGED_ACTION)
+                addAction(ACTION_UPDATE_SLIDER_POSITION)
             }
-        plugin.registerReceiver(updateReceiver, filter)
+        plugin.registerReceiver(updateReceiver, filter, Context.RECEIVER_EXPORTED)
     }
 
     override fun onDestroy() {
@@ -140,7 +168,7 @@ class AlertSliderPlugin : OverlayPlugin {
                 lastInfo = info
                 handleResetTimeout()
                 launchDozePulse()
-                dialog.setState(info.position, info.mode)
+                dialog.setState(info.position, info.mode, info.packageName)
             }
         }
 
@@ -160,7 +188,7 @@ class AlertSliderPlugin : OverlayPlugin {
 
                 showing = false
                 dialog = AlertSliderDialog(context)
-                lastInfo?.let { dialog.setState(it.position, it.mode) }
+                lastInfo?.let { dialog.setState(it.position, it.mode, it.packageName) }
 
                 if (wasShowing) {
                     showing = true
@@ -185,6 +213,11 @@ class AlertSliderPlugin : OverlayPlugin {
 
         // Intent
         private const val DOZE_INTENT = "com.android.systemui.doze.pulse"
+        private const val ACTION_UPDATE_SLIDER_POSITION =
+            "org.lineageos.device.settings.UPDATE_SLIDER_POSITION"
+        private const val EXTRA_SLIDER_POSITION = "position"
+        private const val EXTRA_SLIDER_POSITION_VALUE = "position_value"
+        private const val EXTRA_SLIDER_PACKAGE = "package"
 
         // Handler
         private const val MSG_DIALOG_SHOW = 1
